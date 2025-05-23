@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArangoDB - Banco de Dados NoSQL Multimodelo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #dbe180;
+            --secondary-color: #5F7343;
+            --accent-color: #00d4aa;
+            --text-primary: #2d3748;
+            --text-secondary: #4a5568;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f7fafc;
+            --bg-card: #ffffff;
+            --border-color: #e2e8f0;
+            --shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            --shadow-hover: 0 20px 40px rgba(0, 0, 0, 0.15);
+            --gradient: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            --gradient-accent: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+        }
+
+        [data-theme="dark"] {
+            --text-primary: #f7fafc;
+            --text-secondary: #e2e8f0;
+            --bg-primary: #1a202c;
+            --bg-secondary: #2d3748;
+            --bg-card: #2d3748;
+            --border-color: #4a5568;
+            --shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            --shadow-hover: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--bg-primary);
+            transition: all 0.3s ease;
+            overflow-x: hidden;
+        }
+
+        /* Header and Navigation */
+        .header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        [data-theme="dark"] .header {
+            background: rgba(26, 32, 44, 0.95);
+        }
+
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-link {
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            position: relative;
+        }
+
+        .nav-link:hover {
+            color: var(--primary-color);
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover::after,
+        .nav-link.active::after {
+            width: 100%;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 2px solid var(--border-color);
+            border-radius: 50px;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background: var(--gradient);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="50" r="0.5" fill="rgba(255,255,255,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+            max-width: 800px;
+            padding: 2rem;
+            animation: fadeInUp 1s ease;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .hero p {
+            font-size: 1.5rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 2rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 3rem;
+        }
+
+        /* Sections */
+        .section {
+            padding: 5rem 0;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s ease;
+        }
+
+        .section.animate {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .section:nth-child(even) {
+            background: var(--bg-secondary);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .section-title {
+            font-size: 3rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 3rem;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .section-subtitle {
+            font-size: 1.2rem;
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 4rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Cards */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .card-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            background: var(--gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .card h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .card p {
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: var(--gradient);
+            transform: translateX(-50%);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 3rem;
+        }
+
+        .timeline-content {
+            background: var(--bg-card);
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: var(--shadow);
+            width: 45%;
+            position: relative;
+        }
+
+        .timeline-item:nth-child(odd) .timeline-content {
+            margin-left: auto;
+        }
+
+        .timeline-date {
+            position: absolute;
+            left: 50%;
+            top: 2rem;
+            transform: translateX(-50%);
+            background: var(--primary-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        /* CAP Theorem Visualization */
+        .cap-diagram {
+            max-width: 500px;
+            margin: 3rem auto;
+            position: relative;
+        }
+
+        .cap-triangle {
+            width: 100%;
+            height: 400px;
+            position: relative;
+        }
+
+        .cap-vertex {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: white;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .cap-vertex:hover {
+            transform: scale(1.1);
+        }
+
+        .consistency {
+            background: #4299e1;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .availability {
+            background: #48bb78;
+            bottom: 0;
+            left: 0;
+        }
+
+        .partition {
+            background: #ed8936;
+            bottom: 0;
+            right: 0;
+        }
+
+        .arangodb-position {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            top: 40%;
+            left: 45%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.8rem;
+            animation: pulse 2s infinite;
+        }
+
+        /* Code Blocks */
+        .code-block {
+            background: #1a202c;
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem 0;
+            position: relative;
+            overflow-x: auto;
+        }
+
+        .code-block pre {
+            color: #e2e8f0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .code-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #4a5568;
+        }
+
+        .code-title {
+            color: #a0aec0;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .copy-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: #e53e3e;
+        }
+
+        /* Comparison Table */
+        .comparison-table {
+            background: var(--bg-card);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            margin: 2rem 0;
+        }
+
+        .comparison-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .comparison-table th {
+            background: var(--gradient);
+            color: white;
+            font-weight: 600;
+        }
+
+        .comparison-table tr:hover {
+            background: var(--bg-secondary);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--bg-secondary);
+            padding: 3rem 0;
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer h3 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .footer p {
+            color: var(--text-secondary);
+        }
+
+        .download-btn {
+            display: inline-block;
+            background: var(--gradient);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.8s ease;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero p {
+                font-size: 1.2rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .timeline::before {
+                left: 2rem;
+            }
+
+            .timeline-content {
+                width: calc(100% - 4rem);
+                margin-left: 4rem !important;
+            }
+
+            .timeline-date {
+                left: 2rem;
+                transform: none;
+            }
+
+            .cap-vertex {
+                width: 80px;
+                height: 80px;
+                font-size: 0.8rem;
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav">
+            <div class="logo">ArangoDB</div>
+            <ul class="nav-menu">
+                <li><a href="#inicio" class="nav-link active">Início</a></li>
+                <li><a href="#objetivos" class="nav-link">Objetivos</a></li>
+                <li><a href="#estrutura" class="nav-link">Estrutura</a></li>
+                <li><a href="#cap" class="nav-link">CAP</a></li>
+                <li><a href="#demo" class="nav-link">Demo</a></li>
+                <li><a href="#conclusao" class="nav-link">Conclusão</a></li>
+            </ul>
+            <button class="theme-toggle" onclick="toggleTheme()">🌙 Escuro</button>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="inicio" class="hero">
+        <div class="hero-content">
+            <h1>ArangoDB</h1>
+            <p>Banco de Dados NoSQL Multimodelo</p>
+            <div class="hero-subtitle">
+                Apresentado por: <strong>5° Período de Engenharia de Software</strong><br>
+                Disciplina: Banco de Dados NoSQL
+            </div>
+        </div>
+    </section>
+
+    <!-- História e Contextualização -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">História e Contextualização</h2>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-date"></div>
+                    <div class="timeline-content">
+                        <h3>Fundação</h3>
+                        <p>Criado pela empresa alemã ArangoDB GmbH em 2011. Idealizado por Claudius Weinberger e Frank Celler.</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-date"></div>
+                    <div class="timeline-content">
+                        <h3>Versão</h3>
+                        <p>Primeira versão estável lançada em 2012. Atualmente na versão 3.11 (2024).</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-date"></div>
+                    <div class="timeline-content">
+                        <h3>Nome</h3>
+                        <p>"Arango" foi inspirado no termo "araneus" (aranha em latim), simbolizando a natureza de múltiplas conexões dos grafos.</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-date"></div>
+                    <div class="timeline-content">
+                        <h3>Popularidade</h3>
+                        <p>Possui mais de 11.000 estrelas no GitHub e uma comunidade global ativa.</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-date"></div>
+                    <div class="timeline-content">
+                        <h3>Evolução Contínua</h3>
+                        <p>Implementação de recursos avançados como ArangoSearch, SmartGraphs e melhorias na performance e escalabilidade.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Problemas Resolvidos -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">Problemas que resolve em comparação aos bancos relacionais</h2>
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-icon">🔗</div>
+                    <h3>Flexibilidade e Modelagem de Dados</h3>
+                    <li>Flexibilidade de esquema em contraste com o esquema rígido dos bancos relacionais;</li>
+                    <li>Redução da impedância objeto-relacional, pois os documentos JSON espelham estruturas de objetos;</li>
+                    <li>Capacidade única de combinar múltiplos modelos (documento, grafo, chave-valor) em um único banco;</li>
+                    <li>Redução da complexidade da arquitetura de dados.</li>
+                </div>
+                <div class="card">
+                    <div class="card-icon">⚡</div>
+                    <h3>Desempenho e Eficiência</h3>
+                    <li>Melhor desempenho em dados complexos, aninhados e de alta dimensionalidade;</li>
+                    <li>Melhor suporte para consultas de travessia (percorrer relacionamentos) que são complexas em SQL.</li>
+                </div>
+                <div class="card">
+                    <div class="card-icon">🎯</div>
+                    <h3>Escalabilidade e Arquitetura</h3>
+                    <li>Escalabilidade horizontal simplificada sem comprometer desempenho;</li>
+                    <li>Eliminação da necessidade de sincronização entre diferentes bancos de dados.</li>
+                </div>
+                <div class="card">
+                    <div class="card-icon">🔄</div>
+                    <h3>Integração e Simplificação</h3>
+                    <li>Integração de diferentes tipos de dados e acessos em um único sistema;</li>
+                    <li>Menor necessidade de ferramentas adicionais para unir modelos diferentes (ex.: grafo e documento).</li>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Objetivos e Vantagens -->
+    <section id="objetivos" class="section">
+        <div class="container">
+            <h2 class="section-title">Objetivos do ArangoDB</h2>
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-icon">🎯</div>
+                    <h3>Integração e Unificação</h3>
+                    <li>Fornecer uma plataforma de banco de dados que integre diferentes modelos de dados em um único motor;</li>
+                    <li>Proporcionar uma linguagem de consulta unificada (AQL) para todos os modelos de dados;</li>
+                    <li>Simplificar a arquitetura de aplicações eliminando a necessidade de múltiplos bancos de dados.</li>
+                </div>
+                <div class="card">
+                    <div class="card-icon">🚀</div>
+                    <h3>Desempenho e Eficiência</h3>
+                    <li>Oferecer alta performance e escalabilidade;</li>
+                    <li>Otimização para operações de leitura e escrita em grande volume.</li>
+                </div>
+                <div class="card">
+                    <div class="card-icon">🔍</div>
+                    <h3>Escalabilidade e Baixa Latência</h3>
+                    <li>Manter operações com baixa latência mesmo em grandes conjuntos de dados.</li>
+                </div>
+            </div>
+
+
+            <h2 class="section-title">Situações em que o ArangoDB se destaca</h2>
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-icon">🎯</div>
+                    <h3>Multimodelo e Complexidade de Dados</h3>
+                    <li>Aplicações que necessitam de múltiplos modelos de dados (documentos e grafos);</li>
+                    <li>Aplicações de e-commerce com catálogos complexos;</li>
+                    <li>Gerenciamento de conteúdo e análise de redes sociais.</li>
+                </div>
+                <div class="card">
+                    <div class="card-icon">🚀</div>
+                    <h3>Grafos e Relacionamentos Complexos</h3>
+                    <li>Sistemas de recomendação (usando grafos para relacionamentos);</li>
+                    <li>Sistemas de detecção de fraude e análise de riscos;</li>
+                    <li>Gerenciamento de identidade e controle de acesso.</li>
+                    
+                </div>
+                <div class="card">
+                    <div class="card-icon">🔍</div>
+                    <h3>Dados em Tempo Real e IoT</h3>
+                    <li>IoT e análise de séries temporais;</li>
+                    <li>IoT com relacionamentos entre dispositivos.</li>
+                </div>
+            </div>
+
+
+
+
+
+            <h2 class="section-title">Casos em que NÃO é recomendado</h2>
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-icon">❌</div>
+                    <h3>Quando Não usar o ArangoDB</h3>
+                    <li>Aplicações bancárias e sistemas financeiros legados com forte dependência do modelo relacional;</li>
+                    <li>Aplicações que requerem esquema rígido e forte consistência em todas as operações;</li>
+                    <li>Casos de uso que exigem joins complexos entre muitas tabela;s</li>
+                    <li>Quando o modelo relacional é suficiente e a equipe já domina SQL;</li>
+                    <li>Ambientes com recursos de hardware muito limitados.</li>
+                </div>
+                
+            </div>
+
+
+
+
+            
+        </div>
+    </section>
+
+    <!-- Comparativo -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">Comparativo com Outros NoSQL</h2>
+            <div class="comparison-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Banco de Dados</th>
+                            <th>Comparação com ArangoDB</th>
+                
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>MongoDB</td>
+                            <td><li>ArangoDB oferece capacidades de grafo que o MongoDB não possui;</li>
+                            <li>ArangoDB tem vantagem na integração nativa de grafos e documentos.</li></td>
+                            
+                        </tr>
+                        <tr>
+                            <td>Neo4j</td>
+                            <td><li>ArangoDB permite armazenar documentos e grafos, enquanto Neo4j é especializado apenas em grafos;</li>
+                            <li>ArangoDB tem melhor escalabilidade horizontal para grafos.</li></td>
+                            
+                        </tr>
+                        <tr>
+                            <td>Redis</td>
+                            <td><li>ArangoDB possui mais recursos de consulta que o Redis, que é focado em desempenho como cache;</li>
+                            <li>ArangoDB oferece consultas complexas e capacidades analíticas que Redis não tem.</li></td>
+                            
+                        </tr>
+                        <tr>
+                            <td>Cassandra</td>
+                            <td><li>ArangoDB é melhor para consultas complexas, enquanto Cassandra foca em alta disponibilidade e escalabilidade;</li>
+                            <li>ArangoDB oferece mais flexibilidade nos modelos de dados.</li></td>
+                            
+                        </tr>
+                        
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Estrutura e Funcionamento -->
+    <section id="estrutura" class="section">
+        <div class="container">
+
+            <h2 class="section-title">Estrutura e Funcionamento Interno</h2>
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-icon">📄</div>
+                    <h3>Como os dados são armazenados</h3>
+                    <li>Multi-modelo: combina armazenamento de documentos, grafos e chave-valor</li>
+                    <li>Documentos são armazenados em formato JSON/BSON estendido</li>
+                    <li>Grafos são implementados com coleções de documentos para vértices e arestas</li>
+                    <li>Usa o motor de armazenamento "RocksDB" por padrão (otimizado para SSD)</li>
+                    <li>Sistema de cache em camadas</li>
+                </div>
+                
+            </div>
+
+
+            <h2 class="section-title">Estruturas básicas e elementos-chave</h2>
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-icon">🗂️</div>
+                    <h3>Coleções</h3>
+                    <li>Agrupam documentos semelhantes (equivalente a tabelas);</li>
+                    <li>Coleções de documentos: Armazenam documentos regulares;</li>
+                    <li>Coleções de arestas: Armazenam conexões entre documentos (para grafos).</li>
+                </div>
+
+
+                <div class="card">
+                    <div class="card-icon">📄</div>
+                    <h3>Documentos, índices e grafos</h3>
+                    <li>Documentos: Objetos JSON com identificador único (_id, _key, _rev);</li>
+                    <li>_id: identificador completo (coleção/chave);</li>
+                    <li>_key: identificador único dentro da coleção;</li>
+                    <li>_rev: revisão para controle de concorrência (MVCC);</li>
+                    <li>_from, _to: específicos para documentos em coleções de arestas;</li>
+                    <li>Índices de diferentes tipos para otimizar consultas (hash, skiplist, geo, fulltext, etc.);</li>
+                    <li>Grafos compostos por coleções de vértices e arestas.</li>
+                </div>
+
+
+
+                <div class="card">
+                    <div class="card-icon">🔑</div>
+                    <h3>AQL (ArangoDB Query Language)</h3>
+                    <li>Linguagem declarativa para consultas em todos os modelos</li>
+                    <li>Inspirada em SQL mas com extensões para documentos e grafos</li>
+                    <li>Suporte a operações CRUD completas</li>
+                    <li>Funcionalidades avançadas: funções geoespaciais, funções de texto, agregações</li>
+                    <li>Otimizador de consultas com múltiplas estratégias</li>
+                </div>
+                
+            </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+            <h2 class="section-title">Arquitetura</h2>
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-icon">📄</div>
+                    <h3>Distribuição (Distribuição de Dados)</h3>
+                    <li><strong>ArangoDB é distribuído por natureza:</strong> Ele pode ser executado em um cluster com vários servidores;</li>
+                    <li><strong>Divide os dados em partes (shards):</strong> Cada coleção é dividida em pedaços chamados "shards", que são distribuídos entre diferentes nós;</li>
+                    <li><strong>Coordenadores:</strong> recebem as requisições dos usuários e decidem onde os dados estão;</li>
+                    <li><strong>DB-Servers:</strong> armazenam os shards (dados reais).</li>                  
+                </div>
+
+
+                <div class="card">
+                    <div class="card-icon">📄</div>
+                    <h3>Replicação (Cópia de Dados)</h3>
+                    <li><strong>Alta disponibilidade com cópias dos dados:</strong> Cada shard pode ter réplicas (cópias) armazenadas em outros servidores;</li>
+                    <li><strong>Failover automático:</strong> Se um servidor falhar, outro servidor com a réplica pode assumir automaticamente;</li>
+                    <li><strong>Modo síncrono ou assíncrono:</strong></li>
+                    <li><strong>Síncrono:</strong> garante que os dados estejam sempre consistentes entre as réplicas;</li>
+                    <li><strong>Assíncrono:</strong> tem desempenho mais rápido, mas pode haver atraso na sincronização dos dados;</li>                 
+                </div>
+
+
+
+                <div class="card">
+                    <div class="card-icon">📄</div>
+                    <h3>Escalabilidade (Crescimento do Sistema)</h3>
+                    <li><strong>Escalabilidade horizontal:</strong> É possível adicionar mais máquinas ao cluster para aumentar a capacidade;</li>
+                    <li><strong>Balanceamento de carga automático:</strong> O ArangoDB distribui os shards entre os servidores para evitar sobrecarga;</li>
+                    <li><strong>Boa performance com grandes volumes de dados:</strong> Mesmo com muitos dados ou consultas complexas, o banco mantém bom desempenho.</li>
+                    
+                </div>
+                
+            </div>
+        </div>
+    </section>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <!-- Teorema CAP -->
+    <section id="cap" class="section">
+        <div class="container">
+            <h2 class="section-title">Teorema CAP e Propriedades</h2>
+            <p class="section-subtitle">ArangoDB é principalmente um sistema CP (Consistência e Tolerância a Particionamento).
+No modo cluster, prioriza consistência sobre disponibilidade em caso de particionamento de rede.
+No modo single-server, atua como um sistema CA.</p>
+            
+            <div class="cap-diagram">
+                <div class="cap-triangle">
+                    <div class="cap-vertex consistency">
+                        <div>
+                            <strong>Consistency</strong><br>
+                            <small>Consistência</small>
+                        </div>
+                    </div>
+                    <div class="cap-vertex availability">
+                        <div>
+                            <strong>Availability</strong><br>
+                            <small>Disponibilidade</small>
+                        </div>
+                    </div>
+                    <div class="cap-vertex partition">
+                        <div>
+                            <strong>Partition</strong><br>
+                            <small>Tolerância</small>
+                        </div>
+                    </div>
+                    <div class="arangodb-position" title="Posição do ArangoDB no teorema CAP">
+                        Arango
+                    </div>
+                </div>
+            </div>
+
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-icon">🔄</div>
+                    <h3>Consistência</h3>
+                    <p>Oferece diferentes níveis configuráveis:
+Consistência forte para operações críticas e consistência eventual para melhor desempenho.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">🌐</div>
+                    <h3>Tolerância a Partições</h3>
+                    <li>Implementa mecanismos de detecção e recuperação;</li>
+                    <li>Resolução automática de conflitos após reconexão;</li>
+                    <li>Eleição de líder em caso de particionamento de rede;</li>
+                    <li>Diagnóstico automático de problemas de rede.</li>
+                </div>
+                <div class="card">
+                    <div class="card-icon">⚡</div>
+                    <h3>Estratégias de Disponibilidade</h3>
+                    <li>Usa replicação para alta disponibilidade;</li>
+                    <li>Failover automático para réplicas em caso de falha;</li>
+                    <li>Balanceamento de carga entre réplicas;</li>
+                    <li>Restauração automática de réplicas faltantes.</li>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demonstração Prática -->
+    <section id="demo" class="section">
+        <div class="container">
+            <h2 class="section-title">Demonstração Prática</h2>
+            
+            <h3 style="margin-bottom: 2rem;">Instalação via Docker</h3>
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Terminal</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+                </div>
+                <pre><code># Executar ArangoDB via Docker
+docker run -p 8529:8529 -e ARANGO_ROOT_PASSWORD=senha123 arangodb/arangodb:latest
+
+# Acessar interface web
+# http://localhost:8529</code></pre>
+            </div>
+
+            <h3 style="margin: 3rem 0 2rem;">Exemplos de Consultas AQL</h3>
+            
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Inserção de Dados</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+                </div>
+                <pre><code>// Inserir documentos na coleção 'usuarios'
+INSERT {
+  nome: "João Silva",
+  idade: 28,
+  cidade: "São Paulo",
+  interesses: ["tecnologia", "futebol", "música"]
+} INTO usuarios
+
+// Inserir múltiplos documentos
+FOR user IN [
+  {nome: "Maria Santos", idade: 32, cidade: "Rio de Janeiro"},
+  {nome: "Pedro Costa", idade: 25, cidade: "Belo Horizonte"}
+]
+INSERT user INTO usuarios</code></pre>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Consultas e Filtros</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+                </div>
+                <pre><code>// Buscar usuários por idade
+FOR user IN usuarios
+  FILTER user.idade >= 25
+  RETURN {nome: user.nome, idade: user.idade}
+
+// Buscar com múltiplos critérios
+FOR user IN usuarios
+  FILTER user.cidade == "São Paulo" AND user.idade < 30
+  SORT user.nome ASC
+  RETURN user</code></pre>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Consultas em Grafos</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+                </div>
+                <pre><code>// Criar relacionamento de amizade
+INSERT {
+  _from: "usuarios/joao",
+  _to: "usuarios/maria",
+  tipo: "amizade",
+  desde: "2023-01-15"
+} INTO amizades
+
+// Encontrar amigos de amigos
+FOR user IN usuarios
+  FILTER user.nome == "João Silva"
+  FOR friend IN 1..2 OUTBOUND user amizades
+    RETURN DISTINCT friend.nome</code></pre>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Agregações e Análises</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+                </div>
+                <pre><code>// Estatísticas por cidade
+FOR user IN usuarios
+  COLLECT cidade = user.cidade WITH COUNT INTO total
+  RETURN {
+    cidade: cidade,
+    quantidade: total,
+    percentual: ROUND(total * 100 / LENGTH(usuarios), 2)
+  }
+
+// Usuários mais conectados
+FOR user IN usuarios
+  LET connections = (
+    FOR v IN 1..1 OUTBOUND user amizades
+      RETURN 1
+  )
+  RETURN {
+    nome: user.nome,
+    amigos: LENGTH(connections)
+  }
+  SORT LENGTH(connections) DESC
+  LIMIT 10</code></pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interface Gráfica -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">Interface Web e APIs</h2>
+            <div class="cards-grid">
+                <div class="card">
+                    <div class="card-icon">🖥️</div>
+                    <h3>Web Interface</h3>
+                    <p>Interface web completa para administração, consultas AQL, visualização de grafos e monitoramento de performance em tempo real.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">🔌</div>
+                    <h3>REST API</h3>
+                    <p>API RESTful completa para todas as operações CRUD, administração de coleções e execução de consultas AQL via HTTP.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">⚙️</div>
+                    <h3>Foxx Framework</h3>
+                    <p>Framework JavaScript para criar microserviços customizados diretamente no banco, com roteamento e middleware integrados.</p>
+                </div>
+            </div>
+
+            <div class="code-block">
+                <div class="code-header">
+                    <span class="code-title">Exemplo Foxx Microservice</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copiar</button>
+                </div>
+                <pre><code>// main.js - Serviço Foxx para API de usuários
+const createRouter = require('@arangodb/foxx/router');
+const db = require('@arangodb').db;
+
+const router = createRouter();
+
+// Endpoint para buscar usuários
+router.get('/usuarios', function (req, res) {
+  const users = db._query(`
+    FOR user IN usuarios
+      RETURN {
+        id: user._key,
+        nome: user.nome,
+        cidade: user.cidade
+      }
+  `).toArray();
+  
+  res.json(users);
+});
+
+// Endpoint para criar usuário
+router.post('/usuarios', function (req, res) {
+  const userData = req.body;
+  const result = db.usuarios.save(userData);
+  res.json({success: true, id: result._key});
+});
+
+module.context.use(router);</code></pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- Conclusão -->
+    <section id="conclusao" class="section">
+        <div class="container">
+            <h2 class="section-title">Conclusão e Discussão</h2>
+            
+            <div class="cards-grid">
+                <div class="card" style="border-left: 4px solid #48bb78;">
+                    <div class="card-icon">✨</div>
+                    <h3>Pontos Fortes</h3>
+                    <ul style="color: var(--text-secondary); margin-top: 1rem;">
+                        <li>Versatilidade para múltiplos modelos de dados em um único sistema;</li>
+                        <li>Linguagem de consulta poderosa e intuitiva;</li>
+                        <li>Excelente desempenho em consultas de grafo e documentos complexos;</li>
+                        <li>Interface web completa para administração e monitoramento;</li>
+                        <li>Escalabilidade horizontal eficiente;</li>
+                        <li>Comunidade ativa e bom suporte;</li>
+                        <li>API HTTP RESTful abrangente.</li>
+                    </ul>
+                </div>
+                <div class="card" style="border-left: 4px solid #ed8936;">
+                    <div class="card-icon">⚠️</div>
+                    <h3>Limitações</h3>
+                    <ul style="color: var(--text-secondary); margin-top: 1rem;">
+                        <li>Curva de aprendizado inicial para dominar o AQL;</li>
+                        <li>Menor adoção no mercado comparado a MongoDB ou Neo4j;</li>
+                        <li>Menos profissionais especializados disponíveis no mercado;</li>
+                        <li>Ecossistema de ferramentas menos desenvolvido que concorrentes mais estabelecidos;</li>
+                        <li>Consumo de recursos relativamente alto em comparação com bancos mais especializados.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin: 3rem 0;">
+                <h3>Recapitulação dos pontos principais</h3>
+                <p style="max-width: 800px; margin: 2rem auto; color: var(--text-secondary); font-size: 1.1rem;">
+                    ArangoDB é um banco de dados multi-modelo que integra de forma nativa os modelos de documentos, grafos e chave-valor em um único sistema. Uma de suas principais características é a linguagem de consulta unificada AQL (ArangoDB Query Language), que permite consultar e manipular todos esses modelos de dados com uma sintaxe consistente e poderosa. O ArangoDB também oferece escalabilidade horizontal por meio de clusters e sharding automático, facilitando a distribuição e o gerenciamento de grandes volumes de dados. Em termos de consistência, o banco implementa o modelo CP do teorema CAP, priorizando a consistência e a tolerância a particionamento em ambientes distribuídos. Dessa forma, o AQL possibilita uma abordagem unificada para lidar com diferentes tipos de dados, simplificando o desenvolvimento de aplicações complexas.</p>
+                
+                <div style="background: var(--gradient); color: white; padding: 2rem; border-radius: 15px; margin: 2rem 0;">
+                    <h4 style="margin-bottom: 1rem;">💡 Discussão Aberta</h4>
+                    <p>Agora é o momento para suas perguntas e discussões sobre o ArangoDB!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div>
+                    <h3>Equipe do Projeto</h3>
+                    <p>Estudantes de Engenharia de Software</p>
+                    <p>Disciplina: Banco de Dados NoSQL</p>
+                </div>
+            </div>
+            <div style="text-align: center; padding-top: 2rem; border-top: 1px solid var(--border-color); color: var(--text-secondary);">
+                <p>&copy; 2025 Apresentação ArangoDB - Grupo de Engenharia de Software</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Theme Toggle
+        function toggleTheme() {
+            const body = document.body;
+            const button = document.querySelector('.theme-toggle');
+            
+            if (body.getAttribute('data-theme') === 'dark') {
+                body.setAttribute('data-theme', 'light');
+                button.textContent = '🌙 Escuro';
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                button.textContent = '☀️ Claro';
+            }
+        }
+
+        // Smooth Scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Navigation Active State
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('section[id]');
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop - 100;
+                if (scrollY >= sectionTop) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${current}`) {
+                    link.classList.add('active');
+                }
+            });
+        });
+
+        // Intersection Observer for Animations
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate');
+                }
+            });
+        }, observerOptions);
+
+        // Observe all sections
+        document.querySelectorAll('.section').forEach(section => {
+            observer.observe(section);
+        });
+
+        // Copy Code Function
+        function copyCode(button) {
+            const codeBlock = button.closest('.code-block');
+            const code = codeBlock.querySelector('code').textContent;
+            
+            navigator.clipboard.writeText(code).then(() => {
+                const originalText = button.textContent;
+                button.textContent = 'Copiado!';
+                button.style.background = '#48bb78';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '';
+                }, 2000);
+            });
+        }
+
+        // CAP Diagram Interactions
+        document.querySelectorAll('.cap-vertex').forEach(vertex => {
+            vertex.addEventListener('mouseover', function() {
+                const info = {
+                    'consistency': 'Todos os nós veem os mesmos dados simultaneamente',
+                    'availability': 'Sistema permanece operacional o tempo todo',
+                    'partition': 'Sistema continua funcionando apesar de falhas de rede'
+                };
+                
+                const className = this.classList[1];
+                if (info[className]) {
+                    this.title = info[className];
+                }
+            });
+        });
+
+        // Parallax Effect for Hero Section
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            const hero = document.querySelector('.hero');
+            if (hero) {
+                hero.style.transform = `translateY(${scrolled * 0.5}px)`;
+            }
+        });
+
+        // Loading Animation
+        window.addEventListener('load', () => {
+            document.body.classList.add('loaded');
+        });
+    </script>
+</body>
+</html>
